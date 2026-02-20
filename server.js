@@ -10,6 +10,7 @@ app.use(express.json());
 const MQTT_BROKER = 'mqtt://broker.hivemq.com';
 const MQTT_SMS_SEND_TOPIC = 'esp32/sms/send';      // ESP32 subscribes to this
 const MQTT_SMS_RECEIVE_TOPIC = 'esp32/sms/receive'; // ESP32 publishes received SMS here
+const MQTT_DISPLAY_TOPIC = 'esp32/display/info';    // LilyGo T-Display-S3 subscribes to this
 
 // Connect to MQTT broker
 const client = mqtt.connect(MQTT_BROKER);
@@ -21,6 +22,7 @@ client.on('connect', () => {
     console.log('✅ Connected to MQTT broker:', MQTT_BROKER);
     console.log('📡 SMS Send Topic:', MQTT_SMS_SEND_TOPIC);
     console.log('📡 SMS Receive Topic:', MQTT_SMS_RECEIVE_TOPIC);
+    console.log('📡 Display Topic:', MQTT_DISPLAY_TOPIC);
 
     // Subscribe to receive SMS from ESP32
     client.subscribe(MQTT_SMS_RECEIVE_TOPIC, (err) => {
@@ -209,6 +211,59 @@ app.get('/send/:message', (req, res) => {
     });
 });
 
+/**
+ * POST /push-info
+ * Push information to LilyGo T-Display-S3 via MQTT
+ * Query params: title, message, color (optional: info/warn/error/success)
+ * Example: POST /push-info?title=Alert&message=Hello%20World&color=info
+ */
+app.post('/push-info', (req, res) => {
+    const title = req.query.title || req.body.title || 'Info';
+    const message = req.query.message || req.body.message;
+    const color = req.query.color || req.body.color || 'info';
+
+    if (!message) {
+        return res.status(400).json({
+            error: 'Missing message parameter',
+            required: ['message'],
+            optional: ['title', 'color (info/warn/error/success)'],
+            example: '/push-info?title=Alert&message=Hello%20World&color=info'
+        });
+    }
+
+    // Create display payload
+    const displayPayload = JSON.stringify({
+        title: title,
+        message: message,
+        color: color,
+        timestamp: new Date().toISOString()
+    });
+
+    console.log('\n📺 PUSHING INFO TO DISPLAY:');
+    console.log('─'.repeat(50));
+    console.log('Title:', title);
+    console.log('Message:', message);
+    console.log('Color:', color);
+    console.log('─'.repeat(50) + '\n');
+
+    // Publish to LilyGo display
+    client.publish(MQTT_DISPLAY_TOPIC, displayPayload, (err) => {
+        if (err) {
+            console.error('❌ Failed to publish to display:', err);
+            return res.status(500).json({ error: 'Failed to push info to display' });
+        }
+
+        res.json({
+            success: true,
+            message: 'Info pushed to display',
+            data: {
+                title: title,
+                message: message,
+                color: color
+            }
+        });
+    });
+});
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
