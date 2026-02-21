@@ -115,12 +115,13 @@ app.post('/send-sms', (req, res) => {
 
 /**
  * GET /get-sms
- * Retrieve received SMS messages
+ * Return only the latest received SMS, then clear the buffer so the next call shows only new messages.
  */
 app.get('/get-sms', (req, res) => {
+    const latest = receivedSMS.length > 0 ? receivedSMS[receivedSMS.length - 1] : null;
+    receivedSMS = [];
     res.json({
-        count: receivedSMS.length,
-        messages: receivedSMS
+        message: latest
     });
 });
 
@@ -177,7 +178,7 @@ app.get('/', (req, res) => {
                 params: ['phone (required)', 'message (required)']
             },
             'GET /get-sms': {
-                description: 'Get the latest received SMS only',
+                description: 'Get latest SMS only, then clear buffer (next call = only new messages)',
                 example: '/get-sms'
             },
             'GET /get-sms/:index': {
@@ -275,7 +276,7 @@ app.listen(PORT, () => {
     console.log(`   🔴 POST /send-sms`);
     console.log(`      Send SMS: /send-sms?phone=+917827396007&message=Hello`);
     console.log(`\n   🔵 GET /get-sms`);
-    console.log(`      Get latest received SMS only\n`);
+    console.log(`      Get latest SMS, then clear buffer\n`);
     console.log(`   🟢 DELETE /get-sms`);
     console.log(`      Clear received SMS\n`);
     console.log(`   ⚪ GET /health`);
