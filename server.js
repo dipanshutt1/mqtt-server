@@ -18,6 +18,13 @@ const client = mqtt.connect(MQTT_BROKER);
 // Store for incoming SMS messages
 let receivedSMS = [];
 
+let displayInfo = {
+    title: 'Ready',
+    message: 'No messages yet',
+    color: 'info',
+    timestamp: null
+};
+
 client.on('connect', () => {
     console.log('✅ Connected to MQTT broker:', MQTT_BROKER);
     console.log('📡 SMS Send Topic:', MQTT_SMS_SEND_TOPIC);
@@ -246,7 +253,12 @@ app.post('/push-info', (req, res) => {
     console.log('Message:', message);
     console.log('Color:', color);
     console.log('─'.repeat(50) + '\n');
-
+    displayInfo = {
+        title: title,
+        message: message,
+        color: color,
+        timestamp: new Date().toISOString()
+    };
     // Publish to LilyGo display
     client.publish(MQTT_DISPLAY_TOPIC, displayPayload, (err) => {
         if (err) {
@@ -265,6 +277,14 @@ app.post('/push-info', (req, res) => {
         });
     });
 });
+
+app.get('/get-info', (req, res) => {
+    res.json({
+        success: true,
+        data: displayInfo
+    });
+});
+
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
