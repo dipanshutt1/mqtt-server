@@ -177,7 +177,7 @@ app.get('/', (req, res) => {
                 params: ['phone (required)', 'message (required)']
             },
             'GET /get-sms': {
-                description: 'Get all received SMS',
+                description: 'Get the latest received SMS only',
                 example: '/get-sms'
             },
             'GET /get-sms/:index': {
@@ -275,7 +275,7 @@ app.listen(PORT, () => {
     console.log(`   🔴 POST /send-sms`);
     console.log(`      Send SMS: /send-sms?phone=+917827396007&message=Hello`);
     console.log(`\n   🔵 GET /get-sms`);
-    console.log(`      Get all received SMS\n`);
+    console.log(`      Get latest received SMS only\n`);
     console.log(`   🟢 DELETE /get-sms`);
     console.log(`      Clear received SMS\n`);
     console.log(`   ⚪ GET /health`);
