@@ -47,7 +47,7 @@ client.on('message', (topic, message) => {
         });
 
         // Keep only last 100 messages
-        if (receivedSMS.length > 0) {
+        if (receivedSMS.length > 100) {
             receivedSMS.shift();
         }
     }
